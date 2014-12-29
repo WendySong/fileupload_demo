@@ -37,8 +37,8 @@
 <output id="list"></output>
 <script>
     blobSlice = File.prototype.mozSlice || File.prototype.webkitSlice || File.prototype.slice
-    function readBlob(opt_startByte, opt_stopByte) {
 
+    function readBlob(opt_startByte, opt_stopByte) {
         var files = document.getElementById('files').files;
         if (!files.length) {
             alert('Please select a file!');
@@ -76,7 +76,7 @@
         }
     }, false);
 
-    chunkSize = 200 * 1024;//块大小
+    chunkSize = 1 * 1024 * 1024;//块大小 字节
     function getMD5(file){
         if(!(file instanceof File)){
             console.log("非文件！");
@@ -86,47 +86,48 @@
 
 
         //计算文件大小 并分片
-        var chunkNums = Math.ceil(file.size/chunkSize);//分片的总数量
-        var hexHash;
+        chuck_num = Math.ceil(file.size/chunkSize);//分片的总数量
+        currentChunkPoint = 0;
+        read_chunk_points = new Array();
 
-        if(chunkNums >= 3){
-            //取头 中 尾部
+        if(chuck_num >= 3){
             var head_start = 0;
-            var end_start = (chunkNums-1)*chunkSize;
-            var mid_start = (Math.floor(chunkNums/2))*chunkSize;
-            var aaa = [head_start,mid_start,end_start];
-            for(var i=0;i<3;i++){
-                var reader = new FileReader();
-                reader.onloadend = function (evt) {
-                    if (evt.target.readyState == FileReader.DONE) { // DONE == 2
-                        console.log(reader.result);
-                        spark.append(reader.result);
-//                        reader.abort();
-                    }
-                }
-                var last = aaa[i] + chunkSize;
-                last = last > file.size ? file.size : last;
-                reader.readAsArrayBuffer(blobSlice.call(file, aaa[i], last));
-            }
-//            reader.readAsArrayBuffer(blobSlice.call(file, head_start, head_start + chunkSize))
-//            reader.readAsArrayBuffer(blobSlice.call(file, mid_start, mid_start + chunkSize))
-//            reader.readAsArrayBuffer(blobSlice.call(file, end_start, file.size))
-
-        }else if(chunkNums>=1){
-            var reader = new FileReader();
-            reader.onloadend = function (evt) {
-                if (evt.target.readyState == FileReader.DONE) { // DONE == 2
-                    console.log(reader.result);
-                    spark.append(reader.result);
-//                        reader.abort();
-                }
-            }
-            reader.readAsArrayBuffer(file)
+            var end_start = (chuck_num - 1) * chunkSize;
+            var mid_start = (Math.floor(chuck_num / 2)) * chunkSize;
+            read_chunk_points[0] = head_start;
+            read_chunk_points[1] = mid_start;
+            read_chunk_points[2] = end_start;
         }else{
-            hexHash = "";
+            read_chunk_points[0] = 0;
         }
-        hexHash = spark.end();
-        return hexHash;
+
+        frOnloadEnd = function (e) {
+            console.log("read chunk : " , read_chunk_points[currentChunkPoint], "in - ", read_chunk_points.join(","));
+            spark.append(e.target.result);
+            currentChunkPoint ++;
+            if(currentChunkPoint < read_chunk_points.length){
+                loadNext(file)
+            } else {
+                console.log("finished loading!")
+                console.info("hash : ", spark.end());
+            }
+        }
+        frOnerror = function () {
+            console.warn("oops, something went wrong.");
+        };
+
+        loadNext(file);
+    }
+
+    function loadNext(file){
+        var fileReader = new FileReader();
+        fileReader.onloadend = frOnloadEnd;
+        fileReader.onerror = frOnerror;
+
+        var start = read_chunk_points[currentChunkPoint],
+                end = ((start + chunkSize) >= file.size) ? file.size : start + chunkSize;
+
+        fileReader.readAsArrayBuffer(blobSlice.call(file, start, end));
     }
 
     function handleFileSelect(evt) {
@@ -134,14 +135,19 @@
         // files is a FileList of File objects. List some properties.
         var output = [];
         for (var i = 0, f; f = files[i]; i++) {
-            var hexHash = getMD5(files[i]);
+            getMD5(files[i]);
             output.push('<li><strong>', f.name, '</strong> (', f.type || 'n/a', ') - ',
                     f.size, ' bytes, last modified: ',
-                    f.lastModifiedDate.toLocaleDateString(), ' hexHash: ', hexHash, '</li>');
+                    f.lastModifiedDate.toLocaleDateString(), '</li>');
         }
         document.getElementById('list').innerHTML = '<ul>' + output.join('') + '</ul>';
     }
     document.getElementById('files').addEventListener('change', handleFileSelect, false);
+
+    function uploadFile(file){
+        var oXHR = new XMLHttpRequest();
+
+    }
 </script>
 </body>
 </html>
