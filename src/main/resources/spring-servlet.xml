@@ -6,11 +6,15 @@
        xmlns:mvc="http://www.springframework.org/schema/mvc"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
        http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
        http://www.springframework.org/schema/mvc
        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 
-    <!-- 启用spring mvc 注解 -->
-    <context:annotation-config/>
+    <context:component-scan base-package="com.pisx.fileupload"/>
+    <mvc:annotation-driven/>
+    <context:property-placeholder
+            location="classpath:properties/appication.properties,classpath:properties/dataSource.properties"/>
     <!-- respnoseBody编码 -->
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
         <property name="messageConverters">
@@ -26,8 +30,8 @@
             </list>
         </property>
     </bean>
-    <context:component-scan base-package="com.pisx.fileupload"/>
-    <mvc:annotation-driven/>
+    <mvc:default-servlet-handler/>
+    <mvc:resources mapping="/static/**" location="/WEB-INF/static/" />
     <!-- 对模型视图名称的解析，即在模型视图名称添加前后缀 -->
     <bean id="jstlViewResolver"
           class="org.springframework.web.servlet.view.InternalResourceViewResolver"

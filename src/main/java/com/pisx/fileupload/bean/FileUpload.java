@@ -7,11 +7,17 @@ import java.util.Date;
 /**
  * Created by pisx on 2014/12/23.
  */
-public class File {
+public class FileUpload {
+    public static final int UPLOAD_SUCCEED = 1;
+    public static final int UPLOAD_FAILED = 1;
+
     private Integer id;
     private String filename;
     private String path;
     private Date createTime;
+    /**
+     * 保存成功：1 上传失败：-1
+     */
     private Integer status;
     private String md5;
 
@@ -65,5 +71,17 @@ public class File {
 
     public void setMd5(String md5) {
         this.md5 = md5;
+    }
+
+    @Override
+    public String toString() {
+        return "File{" +
+                "id=" + id +
+                ", filename='" + filename + '\'' +
+                ", path='" + path + '\'' +
+                ", createTime=" + createTime +
+                ", status=" + status +
+                ", md5='" + md5 + '\'' +
+                '}';
     }
 }

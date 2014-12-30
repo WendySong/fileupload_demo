@@ -1,7 +1,9 @@
 package com.pisx.fileupload.dao.impl;
 
-import com.pisx.fileupload.bean.File;
-import com.pisx.fileupload.dao.FileDao;
+import com.pisx.fileupload.bean.FileUpload;
+import com.pisx.fileupload.dao.FileUploadDao;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.core.RowMapper;
@@ -15,14 +17,14 @@ import java.sql.*;
 /**
  * Created by pisx on 2014/12/25.
  */
-@Repository
-public class FileDaoImpl extends BaseDaoImpl<File> implements FileDao {
+@Repository(value = "fileUploadDao")
+public class FileUploadDaoImpl extends BaseDaoImpl<FileUpload> implements FileUploadDao {
 
     @Resource
     private JdbcTemplate jdbcTemplate;
 
     @Override
-    public int create(final File entity) {
+    public int create(final FileUpload entity) throws DataAccessException {
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbcTemplate.update(new PreparedStatementCreator() {
 
@@ -43,8 +45,15 @@ public class FileDaoImpl extends BaseDaoImpl<File> implements FileDao {
     }
 
     @Override
-    public int update(File entity) {
+    public int update(FileUpload entity) {
         return super.update(entity);
+    }
+
+    @Override
+    public FileUpload getByMD5(String md5) throws IncorrectResultSizeDataAccessException {
+        String sql = "select * from " + getTableName() + " where md5=?";
+        FileUpload obj = jdbcTemplate.queryForObject(sql, getRowMapper(), md5);
+        return obj;
     }
 
     @Override
@@ -53,18 +62,18 @@ public class FileDaoImpl extends BaseDaoImpl<File> implements FileDao {
     }
 
     @Override
-    public RowMapper<File> getRowMapper() {
-        return new RowMapper<File>() {
+    public RowMapper<FileUpload> getRowMapper() {
+        return new RowMapper<FileUpload>() {
             @Override
-            public File mapRow(ResultSet resultSet, int i) throws SQLException {
-                File file = new File();
-                file.setId(resultSet.getInt("ID"));
-                file.setFilename(resultSet.getString("filename"));
-                file.setPath(resultSet.getString("path"));
-                file.setCreateTime(resultSet.getTimestamp("createtime"));
-                file.setStatus(resultSet.getInt("status"));
-                file.setMd5(resultSet.getString("md5"));
-                return file;
+            public FileUpload mapRow(ResultSet resultSet, int i) throws SQLException {
+                FileUpload fileUpload = new FileUpload();
+                fileUpload.setId(resultSet.getInt("ID"));
+                fileUpload.setFilename(resultSet.getString("filename"));
+                fileUpload.setPath(resultSet.getString("path"));
+                fileUpload.setCreateTime(resultSet.getTimestamp("createtime"));
+                fileUpload.setStatus(resultSet.getInt("status"));
+                fileUpload.setMd5(resultSet.getString("md5"));
+                return fileUpload;
             }
         };
     }

@@ -10,7 +10,7 @@
 <head>
     <title>文件上传</title>
 </head>
-<script type="text/javascript" src="js/jquery-1.11.2.js"></script>
+<script type="text/javascript" src="static/js/jquery-1.11.2.js"></script>
 <script>
     jQuery(document).ready(function () {
         //检查浏览器是否支持File Api提供的所有功能，如果你只需要部分功能，可以省略其它部分的检查.

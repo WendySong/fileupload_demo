@@ -1,6 +1,8 @@
 package com.pisx.fileupload.dao;
 
-import com.pisx.fileupload.bean.File;
+import com.pisx.fileupload.bean.FileUpload;
+import org.springframework.dao.DataAccessException;
+import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 
 import java.io.Serializable;
@@ -10,12 +12,12 @@ import java.util.Map;
 /**
  * Created by pisx on 2014/12/25.
  */
-public interface FileDao extends BaseDao<File> {
+public interface FileUploadDao extends BaseDao<FileUpload> {
     @Override
-    int create(File entity);
+    int create(FileUpload entity) throws DataAccessException;
 
     @Override
-    int update(File entity);
+    int update(FileUpload entity);
 
     @Override
     int update(Map<String, Object> params, Object[] ids);
@@ -30,10 +32,12 @@ public interface FileDao extends BaseDao<File> {
     void deleteAll();
 
     @Override
-    File get(int pk);
+    FileUpload get(int pk);
 
     @Override
-    List<File> getByIds(int[] pks);
+    List<FileUpload> getByIds(int[] pks);
+
+    FileUpload getByMD5(String md5) throws IncorrectResultSizeDataAccessException;
 
     @Override
     int countByParameters(ParameterList params);
@@ -42,5 +46,5 @@ public interface FileDao extends BaseDao<File> {
     Map<String, Object> mapByParameters(int pageNo, int pageSize, ParameterList params, String orderBy);
 
     @Override
-    RowMapper<File> getRowMapper();
+    RowMapper<FileUpload> getRowMapper();
 }

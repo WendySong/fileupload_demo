@@ -6,6 +6,7 @@
   To change this template use File | Settings | File Templates.
 --%>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@include file="WEB-INF/view/path.jsp"%>
 <html>
 <head>
     <title>读取文件</title>
@@ -21,10 +22,13 @@
             margin-top: 5px;
         }
     </style>
-    <script type="text/javascript" src="js/spark-md5.min.js"></script>
+    <script type="text/javascript" src="<%=basePath%>/static/js/spark-md5.min.js"></script>
+    <script type="text/javascript" src="<%=basePath%>/static/js/jquery-1.11.2.js"></script>
 </head>
 <body>
-<input type="file" id="files" name="file"/> Read bytes:
+<input type="file" id="files" name="file"/>
+<input type="button" id="uploadBtn" value="上传"><br>
+Read bytes:
 <span class="readBytesButtons">
   <button data-startbyte="0" data-endbyte="4">1-5</button>
   <button data-startbyte="5" data-endbyte="14">6-15</button>
@@ -36,54 +40,43 @@
 <div id="byte_content"></div>
 <output id="list"></output>
 <script>
-    blobSlice = File.prototype.mozSlice || File.prototype.webkitSlice || File.prototype.slice
 
-    function readBlob(opt_startByte, opt_stopByte) {
-        var files = document.getElementById('files').files;
-        if (!files.length) {
-            alert('Please select a file!');
-            return;
-        }
 
+    $(function () {
+        $("#uploadBtn").on("click",handleClickUploadBtn);
+    });
+    //文件上传
+    function handleClickUploadBtn(e) {
+        var files = $("#files")[0].files;
         var file = files[0];
-        var start = parseInt(opt_startByte) || 0;
-        var stop = parseInt(opt_stopByte) || file.size - 1;
 
-        var reader = new FileReader();
-
-        // If we use onloadend, we need to check the readyState.
-        reader.onloadend = function (evt) {
-            console.log(evt)
-            if (evt.target.readyState == FileReader.DONE) { // DONE == 2
-                document.getElementById('byte_content').textContent = evt.target.result;
-                document.getElementById('byte_range').textContent =
-                        ['Read bytes: ', start + 1, ' - ', stop + 1,
-                            ' of ', file.size, ' byte file'].join('');
-            }
-        };
-//        console.log(File.prototype)
-//        console.log(blobSlice)
-
-        var blob = blobSlice.call(file, start, stop + 1);//切片
-        reader.readAsBinaryString(blob);
     }
 
-    document.querySelector('.readBytesButtons').addEventListener('click', function (evt) {
-        if (evt.target.tagName.toLowerCase() == 'button') {
-            var startByte = evt.target.getAttribute('data-startbyte');
-            var endByte = evt.target.getAttribute('data-endbyte');
-            readBlob(startByte, endByte);
-        }
-    }, false);
+    //上传并验证md5
+    function matchMd5(md5) {
+        $.ajax({
+            type: "POST",
+            url: "matchMd5",
+//            enctype: 'multipart/form-data',
+            dataType: "json",
+            data: {
+                md5: md5
+            },
+            success: function (msg) {
+                console.log(typeof msg);
+            }
+        });
+    }
 
+    blobSlice = File.prototype.mozSlice || File.prototype.webkitSlice || File.prototype.slice
     chunkSize = 1 * 1024 * 1024;//块大小 字节
+    md5 = null;
     function getMD5(file){
         if(!(file instanceof File)){
             console.log("非文件！");
             return null;
         }
         var spark = new SparkMD5.ArrayBuffer();
-
 
         //计算文件大小 并分片
         chuck_num = Math.ceil(file.size/chunkSize);//分片的总数量
@@ -108,8 +101,11 @@
             if(currentChunkPoint < read_chunk_points.length){
                 loadNext(file)
             } else {
+                md5 = spark.end();
+                //上传md5 并验证md5
+                matchMd5(md5);
                 console.log("finished loading!")
-                console.info("hash : ", spark.end());
+                console.info("hash : ", md5);
             }
         }
         frOnerror = function () {
@@ -148,6 +144,42 @@
         var oXHR = new XMLHttpRequest();
 
     }
+
+    function readBlob(opt_startByte, opt_stopByte) {
+        var files = document.getElementById('files').files;
+        if (!files.length) {
+            alert('Please select a file!');
+            return;
+        }
+
+        var file = files[0];
+        var start = parseInt(opt_startByte) || 0;
+        var stop = parseInt(opt_stopByte) || file.size - 1;
+
+        var reader = new FileReader();
+
+        // If we use onloadend, we need to check the readyState.
+        reader.onloadend = function (evt) {
+            console.log(evt)
+            if (evt.target.readyState == FileReader.DONE) { // DONE == 2
+                document.getElementById('byte_content').textContent = evt.target.result;
+                document.getElementById('byte_range').textContent =
+                        ['Read bytes: ', start + 1, ' - ', stop + 1,
+                            ' of ', file.size, ' byte file'].join('');
+            }
+        };
+
+        var blob = blobSlice.call(file, start, stop + 1);//切片
+        reader.readAsBinaryString(blob);
+    }
+
+    document.querySelector('.readBytesButtons').addEventListener('click', function (evt) {
+        if (evt.target.tagName.toLowerCase() == 'button') {
+            var startByte = evt.target.getAttribute('data-startbyte');
+            var endByte = evt.target.getAttribute('data-endbyte');
+            readBlob(startByte, endByte);
+        }
+    }, false);
 </script>
 </body>
 </html>
