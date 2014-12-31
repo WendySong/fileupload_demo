@@ -17,12 +17,14 @@
             location="classpath:properties/appication.properties,classpath:properties/dataSource.properties"/>
     <!-- respnoseBody编码 -->
     <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="order" value="1"></property>
         <property name="messageConverters">
             <list>
                 <bean class="org.springframework.http.converter.StringHttpMessageConverter">
                     <property name="supportedMediaTypes">
                         <list>
                             <value>text/html;charset=UTF-8</value>
+                            <value>text/plain;charset=UTF-8</value>
                             <value>text/json;charset=UTF-8</value>
                         </list>
                     </property>

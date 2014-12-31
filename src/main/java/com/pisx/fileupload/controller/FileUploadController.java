@@ -2,6 +2,7 @@ package com.pisx.fileupload.controller;
 
 import com.pisx.fileupload.bean.FileUpload;
 import com.pisx.fileupload.service.FileUploadService;
+import com.pisx.fileupload.util.DateUtil;
 import com.pisx.fileupload.util.ReturnMessageUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,9 +46,14 @@ public class FileUploadController {
     public String upload(@RequestParam("file") CommonsMultipartFile file, @RequestParam("md5") String md5) {
         long startTime = System.currentTimeMillis();
         String msg = "";
-        String path = fileRoot + new Date().getTime() + "/" + file.getOriginalFilename();
+        String path = fileRoot + DateUtil.date2String(new Date(), "yyyyMMdd");
+        String filePath = path + "/" + file.getOriginalFilename();
+        File pathFile = new File(path);
+        File newFile = new File(filePath);
+        if (!pathFile.exists()) {
+            pathFile.mkdir();
+        }
         logger.info("file:{},md5:{}", file, md5);
-        File newFile = new File(path);
         try {
             //通过CommonsMultipartFile的方法直接写文件（注意这个时候）
             file.transferTo(newFile);
@@ -55,12 +61,12 @@ public class FileUploadController {
             logger.info("文件上传success! -costTime:{} ms,fileSize:{} byte", (endTime - startTime), file.getSize());
             FileUpload fileUpload = new FileUpload();
             fileUpload.setMd5(md5);
-            fileUpload.setPath(path);
+            fileUpload.setPath(filePath);
             fileUpload.setCreateTime(new Date());
             fileUpload.setStatus(FileUpload.UPLOAD_SUCCEED);
             fileUpload.setFilename(file.getOriginalFilename());
             int id = fileUploadService.save(fileUpload);
-            msg = ReturnMessageUtil.createOKMsg("fileupload success!");
+            msg = ReturnMessageUtil.createOKMsg("文件上传成功!");
         } catch (IOException e) {
             logger.error("文件上传失败-file:{},e:{}", file.getOriginalFilename(), e);
             msg = ReturnMessageUtil.createErrorMsg("文件上传失败！");
@@ -75,7 +81,7 @@ public class FileUploadController {
     @RequestMapping(value = "/matchMd5")
     public String checkMD5(@RequestParam("md5") String md5) {
         FileUpload fileUpload = fileUploadService.matchingMD5(md5);
-        boolean result = fileUpload == null;
+        boolean result = fileUpload != null;
         return ReturnMessageUtil.createOKMsg(result);
     }
 }

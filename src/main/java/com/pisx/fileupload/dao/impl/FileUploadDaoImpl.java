@@ -30,7 +30,7 @@ public class FileUploadDaoImpl extends BaseDaoImpl<FileUpload> implements FileUp
 
             @Override
             public PreparedStatement createPreparedStatement(Connection connection) throws SQLException {
-                String sql = "INSERT INTO file(filename, path, createtime, status, md5)";
+                String sql = "INSERT INTO " + getTableName() + "(filename, path, createtime, status, md5) VALUES (?,?,?,?,?)";
                 PreparedStatement preparedStatement = connection.prepareStatement(sql, new String[]{"ID"});
                 int i = 1;
                 preparedStatement.setString(i++, entity.getFilename());

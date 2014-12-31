@@ -24,10 +24,14 @@
     </style>
     <script type="text/javascript" src="<%=basePath%>/static/js/spark-md5.min.js"></script>
     <script type="text/javascript" src="<%=basePath%>/static/js/jquery-1.11.2.js"></script>
+    <script type="text/javascript" src="<%=basePath%>/static/js/ajaxfileupload.js"></script>
 </head>
 <body>
-<input type="file" id="files" name="file"/>
-<input type="button" id="uploadBtn" value="上传"><br>
+<form method="post" action="<%=basePath%>/upload" enctype="multipart/form-data">
+    <input type="file" id="files" name="file"/>
+    <input type="button" id="uploadBtn" value="上传">
+</form>
+<br>
 Read bytes:
 <span class="readBytesButtons">
   <button data-startbyte="0" data-endbyte="4">1-5</button>
@@ -45,15 +49,37 @@ Read bytes:
     $(function () {
         $("#uploadBtn").on("click",handleClickUploadBtn);
     });
+    md5FileMap = {};
     //文件上传
     function handleClickUploadBtn(e) {
-        var files = $("#files")[0].files;
-        var file = files[0];
-
+        for(md5 in md5FileMap) {
+            var formData = new FormData();
+            formData.append('file',md5FileMap[md5]);
+            formData.append('md5', md5);
+            console.log(formData);
+            $.ajax({
+                url: 'upload',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                dataType: 'json',
+                success: function(msg) {
+                    delete md5FileMap[md5];
+                    console.log(msg);
+                    console.log(md5FileMap);
+                },
+                error: function(e) {
+                    console.info(e);
+                    console.error("upload file error!!!");
+                }
+            });
+        }
     }
 
-    //上传并验证md5
-    function matchMd5(md5) {
+
+    //上传md5 并匹配
+    function matchMd5(file,md5) {
         $.ajax({
             type: "POST",
             url: "matchMd5",
@@ -63,7 +89,25 @@ Read bytes:
                 md5: md5
             },
             success: function (msg) {
-                console.log(typeof msg);
+                console.log(msg);
+                if(msg.code==200) {
+                    console.log(typeof msg.content);
+                    if(!msg.content) {//
+                        //验证完之后放到对象里 MD5作为属性  file作为值
+                        md5FileMap[md5] = file;
+                        console.log(md5FileMap);
+                        for(i in md5FileMap) {
+                            if(i != md5){
+                                console.log(i);
+                                delete md5FileMap[i];
+                                console.log(md5FileMap);
+//                        eval("delete md5FileMap." + i);
+                            }
+                        }
+                    }
+                } else {
+                    //TODO 失败处理
+                }
             }
         });
     }
@@ -103,7 +147,7 @@ Read bytes:
             } else {
                 md5 = spark.end();
                 //上传md5 并验证md5
-                matchMd5(md5);
+                matchMd5(file,md5);
                 console.log("finished loading!")
                 console.info("hash : ", md5);
             }
